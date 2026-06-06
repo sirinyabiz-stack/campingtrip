@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* ส่วน CSS อื่นๆ ของคุณ */
+:root {
+  --text: #6b6375;
+  --bg: #ffffff;
+}
+
+.dark {
+  --text: #9ca3af;
+  --bg: #16171d;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+}
