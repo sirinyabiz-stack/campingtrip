@@ -135,6 +135,9 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  // ฟีเจอร์ใหม่: เก็บข้อมูลทริปที่กำลังเปิดดูรายละเอียด
+  const [viewingTrip, setViewingTrip] = useState(null);
+
   // Core Data Lists
   const [trips, setTrips] = useState([]);
   const [sharedExpenses, setSharedExpenses] = useState([]);
@@ -185,7 +188,6 @@ export default function App() {
     receiptImage: ''
   });
 
-  // อัปเดต State ให้รับค่า tripIds แบบ Array ได้
   const [foodForm, setFoodForm] = useState({ title: '', quantity: 1, unitPrice: '', tripIds: [] });
   const [editingFoodId, setEditingFoodId] = useState(null);
 
@@ -256,7 +258,6 @@ export default function App() {
       .reduce((sum, item) => sum + Number(item.amount || 0), 0);
   };
 
-  // ดึงยอดแชร์ค่าเสบียงเฉลี่ยสำหรับทริปนี้
   const getFoodExpenseForTrip = (tripId) => {
     return foodItems
       .filter(item => item.tripIds && item.tripIds.includes(tripId))
@@ -381,13 +382,11 @@ export default function App() {
       setTrips(trips.filter(t => t.id !== id));
       setDirectExpenses(directExpenses.filter(d => d.tripId !== id));
       
-      // ปรับลดทริปที่แชร์ออกจากส่วนกลาง
       setSharedExpenses(sharedExpenses.map(s => ({
         ...s,
         tripIds: s.tripIds.filter(tid => tid !== id)
       })).filter(s => s.tripIds.length > 0));
 
-      // ปรับลดทริปที่แชร์ออกจากเสบียง
       setFoodItems(foodItems.map(f => ({
         ...f,
         tripIds: f.tripIds ? f.tripIds.filter(tid => tid !== id) : []
@@ -425,7 +424,6 @@ export default function App() {
     }
 
     const itemData = { ...sharedForm, amount: Number(sharedForm.amount) };
-
     if (editingSharedId) {
       setSharedExpenses(sharedExpenses.map(s => s.id === editingSharedId ? { ...s, ...itemData } : s));
       triggerToast('อัปเดตค่าใช้จ่ายส่วนกลางเรียบร้อย');
@@ -523,7 +521,7 @@ export default function App() {
       title: foodForm.title,
       quantity: Number(foodForm.quantity || 1),
       unitPrice: Number(foodForm.unitPrice || 0),
-      tripIds: foodForm.tripIds, // บันทึกข้อมูลทริปที่แชร์
+      tripIds: foodForm.tripIds,
       completed: false
     };
 
@@ -552,7 +550,6 @@ export default function App() {
   // === EXPORT TO EXCEL-FRIENDLY CSV ===
   const handleExportCSV = () => {
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    
     csvContent += "=== รายการทริปแคมป์ปิ้ง ===\n";
     csvContent += "ชื่อทริป,สถานะ,วันที่เดินทาง,วันที่กลับ,สถานที่กางเต็นท์,จังหวัด,บันทึกเพิ่มเติม\n";
     trips.forEach(t => {
@@ -627,7 +624,7 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1">
-              CampLog <span className="text-emerald-500 font-medium text-xs">V2 PRO</span>
+               CampLog <span className="text-emerald-500 font-medium text-xs">V2 PRO</span>
             </h1>
             <p className="text-[10px] text-zinc-400 font-medium">Outdoor Trip Expense Planner</p>
           </div>
@@ -659,9 +656,9 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <div className="space-y-5">
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-emerald-950 via-teal-900 to-stone-900 text-white p-5 shadow-xl">
-              <div className="relative z-10 space-y-2">
+               <div className="relative z-10 space-y-2">
                 <div className="inline-block bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase">
-                  Let's explore mountains & forests ??????
+                  Let's explore mountains & forests 🏕️🏔️
                 </div>
                 <h2 className="text-xl font-extrabold leading-snug">บันทึกทุกก้าวทริปกางเต็นท์ของคุณ</h2>
                 <p className="text-emerald-100/75 text-xs font-light leading-relaxed">
@@ -685,7 +682,7 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-              <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
+               <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-stone-200'}`}>
                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wide">ทริปทั้งหมด</p>
                 <p className="text-xl font-extrabold mt-1 text-emerald-500">{trips.length} <span className="text-xs font-normal text-zinc-400">ทริป</span></p>
               </div>
@@ -707,14 +704,13 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
               <div className={`md:col-span-2 p-4 rounded-2xl border ${darkMode ? 'bg-zinc-900 border-zinc-850' : 'bg-white border-stone-200'}`}>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-extrabold text-xs text-zinc-400 uppercase tracking-wide flex items-center gap-1">
                     <Clock size={14} className="text-emerald-500" /> ทริปล่าสุดในสารบบ
                   </h3>
                   <button onClick={() => setActiveTab('trips')} className="text-xs text-emerald-500 font-bold hover:underline">
-                    ดูทริปทั้งหมด ?
+                    ดูทริปทั้งหมด ➔
                   </button>
                 </div>
 
@@ -727,13 +723,14 @@ export default function App() {
                     {trips.slice(0, 3).map(trip => {
                       const totalDirect = getDirectExpenseForTrip(trip.id);
                       const totalShared = getSharedExpenseForTrip(trip.id);
-                      const totalFood = getFoodExpenseForTrip(trip.id); // รวมค่าอาหารที่แชร์ทริปนี้
+                      const totalFood = getFoodExpenseForTrip(trip.id); 
                       const statusConf = TRIP_STATUSES[trip.status];
 
                       return (
                         <div 
                           key={trip.id}
-                          className={`p-3 rounded-xl border flex items-center gap-3 transition ${darkMode ? 'bg-zinc-900/40 hover:bg-zinc-800/40 border-zinc-850' : 'bg-stone-50 hover:bg-stone-100/50 border-stone-200'}`}
+                          onClick={() => setViewingTrip(trip)} // เพิ่มการกดตรงนี้
+                          className={`cursor-pointer p-3 rounded-xl border flex items-center gap-3 transition ${darkMode ? 'bg-zinc-900/40 hover:bg-zinc-800/40 border-zinc-850' : 'bg-stone-50 hover:bg-stone-100/50 border-stone-200'}`}
                         >
                           <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
                             <img src={trip.coverImage} className="w-full h-full object-cover" alt="" />
@@ -766,7 +763,7 @@ export default function App() {
                     <Utensils size={14} className="text-emerald-500" /> สเบียงเตรียมแคมป์
                   </h3>
                   <button onClick={() => setActiveTab('food')} className="text-xs text-emerald-500 font-bold hover:underline">
-                    จัดสเบียง ?
+                    จัดสเบียง ➔
                   </button>
                 </div>
 
@@ -898,22 +895,23 @@ export default function App() {
                       key={trip.id}
                       className={`rounded-2xl border overflow-hidden flex flex-col justify-between shadow-xs transition hover:-translate-y-1 ${darkMode ? 'bg-zinc-900 border-zinc-850' : 'bg-white border-stone-200'}`}
                     >
-                      <div className="relative h-40 bg-zinc-800">
-                        <img src={trip.coverImage} className="w-full h-full object-cover" alt="" />
-                        
-                        <div className="absolute top-2.5 left-2.5 flex gap-1">
-                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-black ${statusConf?.color}`}>
-                            {statusConf?.label}
-                          </span>
+                      {/* แบ่งส่วนเนื้อหาด้านบนให้คลิกได้ */}
+                      <div onClick={() => setViewingTrip(trip)} className="cursor-pointer flex-1 flex flex-col">
+                        <div className="relative h-40 bg-zinc-800">
+                          <img src={trip.coverImage} className="w-full h-full object-cover" alt="" />
+                          
+                          <div className="absolute top-2.5 left-2.5 flex gap-1">
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-black ${statusConf?.color}`}>
+                              {statusConf?.label}
+                            </span>
+                          </div>
+
+                          <div className="absolute top-2.5 right-2.5 bg-stone-950/80 backdrop-blur-xs text-white text-[9px] py-0.5 px-2 rounded-full font-bold">
+                            📍 {trip.province}
+                          </div>
                         </div>
 
-                        <div className="absolute top-2.5 right-2.5 bg-stone-950/80 backdrop-blur-xs text-white text-[9px] py-0.5 px-2 rounded-full font-bold">
-                          ?? {trip.province}
-                        </div>
-                      </div>
-
-                      <div className="p-4 flex-1 flex flex-col justify-between">
-                        <div>
+                        <div className="p-4 flex-1">
                           <h3 className="font-extrabold text-sm text-zinc-800 dark:text-zinc-100">{trip.title}</h3>
                           
                           <p className="text-[11px] text-zinc-400 mt-1 flex items-center gap-1">
@@ -930,8 +928,11 @@ export default function App() {
                             </p>
                           )}
                         </div>
+                      </div>
 
-                        <div className="border-t pt-3 mt-4 flex justify-between items-center">
+                      {/* ส่วนปุ่มด้านล่างแยกเอาไว้ ไม่รวมใน onClick */}
+                      <div className="p-4 pt-0">
+                        <div className="border-t pt-3 flex justify-between items-center">
                           <div>
                             <p className="text-[9px] text-zinc-400 uppercase font-extrabold tracking-wider">งบเดินทางรวม</p>
                             <p className="text-sm font-black text-amber-500">฿{total.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
@@ -1439,9 +1440,70 @@ export default function App() {
 
       </main>
 
+      {/* ================= MODAL: VIEW TRIP DETAILS ================= */}
+      {viewingTrip && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[60]">
+          <div className={`w-full max-w-md rounded-2xl border shadow-2xl overflow-hidden ${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-stone-200 text-zinc-800'}`}>
+            <div className="relative h-48 bg-zinc-800">
+              <img src={viewingTrip.coverImage} className="w-full h-full object-cover" alt="Cover" />
+              <button 
+                onClick={() => setViewingTrip(null)} 
+                className="absolute top-3 right-3 bg-black/50 text-white hover:bg-black/70 p-1.5 rounded-full backdrop-blur-md"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${TRIP_STATUSES[viewingTrip.status]?.color}`}>
+                    {TRIP_STATUSES[viewingTrip.status]?.label}
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-lg">{viewingTrip.title}</h3>
+                <p className="text-xs text-emerald-500 font-bold mt-1">📍 {viewingTrip.location}, จ.{viewingTrip.province}</p>
+                <p className="text-xs text-zinc-400 mt-1">🗓️ {viewingTrip.startDate} ถึง {viewingTrip.endDate}</p>
+              </div>
+
+              {viewingTrip.notes && (
+                <div className={`p-3 rounded-xl text-xs leading-relaxed ${darkMode ? 'bg-zinc-800/50 text-zinc-300' : 'bg-stone-50 text-zinc-600'}`}>
+                  <p className="font-bold text-zinc-400 mb-1">📝 บันทึกช่วยจำ</p>
+                  {viewingTrip.notes}
+                </div>
+              )}
+
+              <div className="border-t pt-4 dark:border-zinc-800">
+                <p className="font-bold text-xs text-zinc-400 mb-2">💰 สรุปงบประมาณทริปนี้</p>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className={`p-2 rounded-lg border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-stone-50 border-stone-200'}`}>
+                    <p className="text-zinc-500 mb-0.5">เฉพาะทริป</p>
+                    <p className="font-bold text-emerald-500">฿{getDirectExpenseForTrip(viewingTrip.id).toLocaleString()}</p>
+                  </div>
+                  <div className={`p-2 rounded-lg border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-stone-50 border-stone-200'}`}>
+                    <p className="text-zinc-500 mb-0.5">หารส่วนกลาง</p>
+                    <p className="font-bold text-amber-500">฿{getSharedExpenseForTrip(viewingTrip.id).toLocaleString()}</p>
+                  </div>
+                  <div className={`p-2 rounded-lg border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-stone-50 border-stone-200'}`}>
+                    <p className="text-zinc-500 mb-0.5">แชร์เสบียง</p>
+                    <p className="font-bold text-indigo-500">฿{getFoodExpenseForTrip(viewingTrip.id).toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-between items-center bg-emerald-500/10 p-3 rounded-xl">
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">ยอดใช้จ่ายรวมสุทธิ</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    ฿{(getDirectExpenseForTrip(viewingTrip.id) + getSharedExpenseForTrip(viewingTrip.id) + getFoodExpenseForTrip(viewingTrip.id)).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================= MODAL: TRIP FORM ================= */}
       {showTripModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[60]">
           <div className={`w-full max-w-lg rounded-2xl border shadow-2xl p-5 ${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-stone-200 text-zinc-800'}`}>
             <div className="flex justify-between items-center border-b pb-3 dark:border-zinc-800">
               <h3 className="font-extrabold text-sm text-emerald-500 flex items-center gap-1">
@@ -1568,7 +1630,7 @@ export default function App() {
 
       {/* ================= MODAL: SHARED EXPENSE ================= */}
       {showSharedModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[60]">
           <div className={`w-full max-w-lg rounded-2xl border shadow-2xl p-5 ${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-stone-200 text-zinc-800'}`}>
             <div className="flex justify-between items-center border-b pb-3 dark:border-zinc-800">
               <h3 className="font-extrabold text-sm text-amber-500 flex items-center gap-1">
@@ -1664,7 +1726,7 @@ export default function App() {
 
       {/* ================= MODAL: DIRECT EXPENSE ================= */}
       {showDirectModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[60]">
           <div className={`w-full max-w-lg rounded-2xl border shadow-2xl p-5 ${darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-stone-200 text-zinc-800'}`}>
             <div className="flex justify-between items-center border-b pb-3 dark:border-zinc-800">
               <h3 className="font-extrabold text-sm text-emerald-500 flex items-center gap-1">
